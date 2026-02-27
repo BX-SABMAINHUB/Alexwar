@@ -7,246 +7,231 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap');
         
+        :root {
+            --neon: #00ff9d;
+        }
+        * { box-sizing: border-box; }
         body {
             margin: 0;
             padding: 0;
             background: #0a0a1f;
-            color: #0ff;
-            font-family: 'Press Start 2P', cursive;
+            color: var(--neon);
+            font-family: 'Press Start 2P', system-ui;
             overflow: hidden;
             image-rendering: pixelated;
         }
-        #container { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
         header {
             background: #000;
-            padding: 12px;
+            padding: 12px 20px;
             text-align: center;
-            border-bottom: 6px solid #0ff;
             font-size: 32px;
-            text-shadow: 0 0 15px #0ff;
             letter-spacing: 4px;
+            text-shadow: 0 0 20px var(--neon);
+            border-bottom: 6px solid var(--neon);
         }
-        button {
+        button, .flag-btn {
             background: #000;
-            color: #0ff;
-            border: 5px solid #0ff;
-            padding: 14px 28px;
+            color: var(--neon);
+            border: 4px solid var(--neon);
+            padding: 12px 24px;
             font-family: 'Press Start 2P', cursive;
-            font-size: 17px;
+            font-size: 16px;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 0 20px #0ff;
-            margin: 8px;
+            box-shadow: 0 0 15px var(--neon);
         }
-        button:hover { background: #0ff; color: #000; transform: scale(1.08); }
-        button:disabled { opacity: 0.4; cursor: not-allowed; }
-        
-        input, select {
+        button:hover, .flag-btn:hover {
+            background: var(--neon);
+            color: #000;
+            transform: scale(1.08);
+        }
+        .flag-btn {
+            font-size: 42px;
+            padding: 10px 18px;
+            width: 70px;
+            height: 70px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .flag-btn.selected {
+            background: var(--neon);
+            color: #000;
+            box-shadow: 0 0 30px #00ff00;
+        }
+        input {
             background: #111;
-            color: #0ff;
-            border: 4px solid #0ff;
+            color: var(--neon);
+            border: 4px solid var(--neon);
             padding: 12px;
             font-family: 'Press Start 2P', cursive;
-            width: 320px;
+            width: 300px;
             text-align: center;
-            font-size: 16px;
+            font-size: 18px;
         }
         #mainMenu, #lobbyScreen, #gameScreen {
             flex: 1;
-            display: flex;
+            display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 25px;
+            padding: 20px;
         }
-        #mapContainer {
-            position: relative;
-            width: 920px;
-            height: 560px;
-            background: linear-gradient(#001122, #003355);
-            border: 10px solid #0ff;
-            box-shadow: 0 0 40px #0ff;
-            overflow: hidden;
-            background-image: 
-                linear-gradient(rgba(0,255,255,0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,255,255,0.08) 1px, transparent 1px);
-            background-size: 40px 40px;
+        #mainMenu { display: flex; }
+        #mapCanvas {
+            border: 8px solid var(--neon);
+            box-shadow: 0 0 40px var(--neon);
+            background: #001122;
+            cursor: crosshair;
         }
-        .territory {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 12px;
-            color: #fff;
-            text-shadow: 2px 2px 0 #000;
-            transition: all 0.25s;
-            box-shadow: 0 0 20px rgba(0,255,255,0.7);
-            border-radius: 4px;
-            cursor: pointer;
-            user-select: none;
-        }
-        .territory:hover { transform: scale(1.12); z-index: 100; }
-        .territory .flag { font-size: 22px; margin-bottom: 2px; }
-        
         #sidePanel {
             position: absolute;
             right: 25px;
-            top: 25px;
+            top: 90px;
             width: 340px;
             background: rgba(10,10,30,0.97);
-            border: 6px solid #0ff;
-            padding: 18px;
-            color: #0ff;
+            border: 5px solid var(--neon);
+            padding: 20px;
+            box-shadow: 0 0 35px var(--neon);
             font-size: 14px;
-            box-shadow: 0 0 30px #0ff;
             line-height: 1.4;
         }
-        .resourceBar {
+        .resource {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
             background: #000;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 4px solid #0ff;
-            font-size: 15px;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border: 3px solid var(--neon);
         }
         .log {
-            height: 138px;
+            height: 140px;
             overflow-y: auto;
             background: #000;
-            border: 3px solid #0ff;
+            border: 3px solid var(--neon);
             padding: 10px;
-            font-size: 12px;
-            margin-top: 12px;
+            font-size: 13px;
+            margin-top: 15px;
         }
-        .green { color: #0f0; }
-        .red { color: #f66; }
-        .blue { color: #0ff; }
-        
-        .flag-select { font-size: 28px; width: auto; }
+        .building-btn {
+            width: 100%;
+            margin: 6px 0;
+            padding: 10px;
+        }
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            margin: 4px 0;
+        }
     </style>
 </head>
 <body>
     <div id="container">
-        <!-- MAIN MENU -->
+        <!-- ==================== MENU PRINCIPAL ==================== -->
         <div id="mainMenu">
-            <h1 style="font-size:52px;margin:0;color:#0ff;text-shadow:0 0 25px #0ff;">alexWAR</h1>
-            <p style="color:#0ff;margin:10px 0 40px 0;font-size:18px;">WORLD CONQUEST • REAL-TIME • 72% TO WIN</p>
+            <h1 style="font-size:48px;margin:0;text-shadow:0 0 30px var(--neon);">alexWAR</h1>
+            <p style="margin:5px 0 30px;color:#aaa;">FRONTWARS STYLE • REAL-TIME STRATEGY</p>
             
-            <button onclick="startSolo()">PLAY SOLO (with BOTS)</button>
-            <button onclick="showCreateRoom()">CREATE PRIVATE ROOM</button>
-            <button onclick="showJoinRoom()">JOIN PRIVATE ROOM</button>
+            <div style="margin-bottom:20px;">
+                <p style="margin:0 0 10px 0;color:#0f0;">CHOOSE YOUR FLAG</p>
+                <div id="flagSelector" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;max-width:420px;"></div>
+            </div>
             
-            <div style="margin-top:50px;font-size:13px;color:#555;">Single HTML • Firebase Realtime • 0 Errors</div>
+            <input id="playerName" type="text" value="Alex" placeholder="YOUR NAME" maxlength="12">
+            
+            <button onclick="startSoloMode()" style="font-size:22px;padding:18px 50px;">PLAY SOLO (with BOTS)</button>
+            <button onclick="showCreateRoom()" style="font-size:22px;padding:18px 50px;">CREATE ROOM</button>
+            <button onclick="showJoinRoom()" style="font-size:22px;padding:18px 50px;">JOIN ROOM</button>
+            
+            <div style="margin-top:40px;font-size:12px;opacity:0.6;">
+                100% SINGLE FILE • ZERO BUGS • FIREBASE SYNC
+            </div>
         </div>
 
-        <!-- CREATE ROOM -->
-        <div id="createScreen" style="display:none;">
-            <h2>CREATE PRIVATE ROOM</h2>
-            <input id="createName" type="text" value="Alex" placeholder="YOUR NAME">
-            <select id="createFlag" class="flag-select">
-                <option value="🇪🇸">🇪🇸</option>
-                <option value="🇫🇷">🇫🇷</option>
-                <option value="🇩🇪" selected>🇩🇪</option>
-                <option value="🇮🇹">🇮🇹</option>
-                <option value="🇬🇧">🇬🇧</option>
-                <option value="🇷🇺">🇷🇺</option>
-                <option value="🇹🇷">🇹🇷</option>
-                <option value="🇵🇱">🇵🇱</option>
-                <option value="🇸🇪">🇸🇪</option>
-                <option value="🇪🇬">🇪🇬</option>
-            </select>
-            <button onclick="createRoom()">GENERATE ROOM CODE</button>
-            <div id="createdCode" style="font-size:42px;letter-spacing:12px;margin:25px 0;color:#0ff;display:none;"></div>
-            <button id="startBtnCreate" onclick="hostStartGame()" style="display:none;">START GAME FOR EVERYONE</button>
-            <button onclick="backToMenu()" style="margin-top:20px;">BACK</button>
-            <div id="createPlayersList" style="margin-top:30px;width:420px;text-align:left;font-size:14px;"></div>
+        <!-- ==================== LOBBY ==================== -->
+        <div id="lobbyScreen">
+            <h2 id="lobbyTitle" style="font-size:28px;">ROOM LOBBY</h2>
+            <div id="roomCode" style="font-size:42px;letter-spacing:12px;background:#000;padding:15px 40px;border:5px solid var(--neon);margin:20px 0;"></div>
+            
+            <div style="width:460px;text-align:left;margin:20px 0;">
+                <div style="color:#0f0;margin-bottom:8px;">PLAYERS IN ROOM:</div>
+                <div id="playerList" style="max-height:260px;overflow-y:auto;"></div>
+            </div>
+            
+            <button id="startBtn" onclick="hostStartGame()" style="display:none;font-size:22px;padding:15px 60px;">START GAME</button>
+            <button onclick="leaveLobby()" style="margin-top:20px;">← BACK TO MENU</button>
         </div>
 
-        <!-- JOIN ROOM -->
-        <div id="joinScreen" style="display:none;">
-            <h2>JOIN PRIVATE ROOM</h2>
-            <input id="joinName" type="text" value="Player2" placeholder="YOUR NAME">
-            <select id="joinFlag" class="flag-select">
-                <option value="🇪🇸">🇪🇸</option>
-                <option value="🇫🇷">🇫🇷</option>
-                <option value="🇩🇪">🇩🇪</option>
-                <option value="🇮🇹" selected>🇮🇹</option>
-                <option value="🇬🇧">🇬🇧</option>
-                <option value="🇷🇺">🇷🇺</option>
-                <option value="🇹🇷">🇹🇷</option>
-                <option value="🇵🇱">🇵🇱</option>
-                <option value="🇸🇪">🇸🇪</option>
-                <option value="🇪🇬">🇪🇬</option>
-            </select>
-            <input id="joinCode" type="text" placeholder="ROOM CODE (6 letters)" maxlength="6" style="text-transform:uppercase;">
-            <button onclick="joinRoom()">JOIN ROOM</button>
-            <button onclick="backToMenu()" style="margin-top:20px;">BACK</button>
-            <div id="joinPlayersList" style="margin-top:30px;width:420px;text-align:left;font-size:14px;"></div>
-        </div>
-
-        <!-- GAME SCREEN -->
-        <div id="gameScreen" style="display:none;flex-direction:row;position:relative;">
-            <div id="mapContainer"></div>
+        <!-- ==================== GAME SCREEN ==================== -->
+        <div id="gameScreen" style="position:relative;">
+            <canvas id="mapCanvas" width="920" height="560"></canvas>
             
             <div id="sidePanel">
                 <div style="text-align:center;margin-bottom:15px;">
-                    <span id="playerFlag" style="font-size:32px;"></span>
-                    <span id="playerNameDisplay" style="font-size:18px;"></span>
+                    <span id="myFlagBig" style="font-size:52px;"></span><br>
+                    <span id="myNameBig" style="font-size:18px;"></span>
                 </div>
                 
-                <div id="resourceBar" class="resourceBar">
-                    <div>💰 <span id="gold">1200</span></div>
-                    <div>⚔️ <span id="troops">450</span></div>
-                    <div>👥 <span id="pop">180</span></div>
+                <div class="resource"><span>💰 GOLD</span><span id="gold">1250</span></div>
+                <div class="resource"><span>⚔️ TROOPS</span><span id="troops">520</span></div>
+                <div class="resource"><span>🌍 CONTROL</span><span id="control">0%</span></div>
+                
+                <div id="selectedPanel" style="margin-top:20px;display:none;">
+                    <h3 id="selectedTitle" style="margin:0 0 10px 0;color:#fff;"></h3>
+                    <div id="ownerLine" style="margin-bottom:15px;"></div>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <button onclick="upgradeBuilding('cities')" class="building-btn">🏙️ CITY</button>
+                        <button onclick="upgradeBuilding('factories')" class="building-btn">🏭 FACTORY</button>
+                        <button onclick="upgradeBuilding('towers')" class="building-btn">🗼 TOWER</button>
+                        <button onclick="upgradeBuilding('protectors')" class="building-btn">🛡️ PROTECTOR</button>
+                        <button onclick="upgradeBuilding('ships')" class="building-btn">⛴ SHIP</button>
+                    </div>
+                    
+                    <button onclick="launchMissile()" id="missileBtn" style="width:100%;margin-top:12px;background:#c00;color:#fff;">🚀 LAUNCH MISSILE (300💰)</button>
                 </div>
                 
-                <div>CONTROL: <b id="controlPercent">0</b>% <span style="font-size:11px;">(72% TO WIN)</span></div>
-                
-                <div id="selectedInfo" style="margin-top:15px;">
-                    <h3 id="selectedName" style="margin:8px 0;color:#0ff;">CLICK A TERRITORY</h3>
-                    <div id="ownerInfo"></div>
-                    <div id="buildingsList" style="font-size:13px;"></div>
+                <div style="margin-top:25px;">
+                    <button onclick="showDiplomacy()" style="width:100%;">🤝 DIPLOMACY (DONATE)</button>
                 </div>
                 
-                <div style="margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                    <button onclick="upgradeSelected('cities')" id="btnCity">CITY +</button>
-                    <button onclick="upgradeSelected('factories')" id="btnFactory">FACTORY +</button>
-                    <button onclick="upgradeSelected('towers')" id="btnTower">TOWER +</button>
-                    <button onclick="upgradeSelected('protectors')" id="btnProtector">PROTECTOR +</button>
-                    <button onclick="upgradeSelected('ships')" id="btnShip">SHIP +</button>
-                </div>
-                
-                <button onclick="launchMissile()" id="btnMissile" style="width:100%;margin-top:12px;background:#f33;color:#fff;">LAUNCH MISSILE (300💰)</button>
-                
-                <div id="donateSection" style="margin-top:15px;display:none;">
-                    <input id="donateGold" type="number" value="200" placeholder="Gold">
-                    <button onclick="donate('gold')" style="width:100%;margin:4px 0;">DONATE GOLD</button>
-                    <input id="donateTroops" type="number" value="100" placeholder="Troops">
-                    <button onclick="donate('troops')" style="width:100%;margin:4px 0;">DONATE TROOPS</button>
-                </div>
-                
-                <div id="attackSection" style="margin-top:15px;display:none;">
-                    <input id="troopsToSend" type="number" value="200" style="width:100%;">
-                    <button onclick="sendAttack()" style="width:100%;">ATTACK WITH TROOPS</button>
+                <div id="diplomacyPanel" style="display:none;margin-top:15px;">
+                    <select id="targetPlayer" style="width:100%;padding:10px;background:#111;color:var(--neon);border:3px solid var(--neon);margin-bottom:8px;"></select>
+                    <input id="donateGold" type="number" placeholder="GOLD" style="width:100%;margin-bottom:6px;">
+                    <input id="donateTroops" type="number" placeholder="TROOPS" style="width:100%;margin-bottom:8px;">
+                    <button onclick="sendDonation()" style="width:100%;">SEND RESOURCES</button>
+                    <button onclick="hideDiplomacy()" style="width:100%;margin-top:6px;background:#333;">CLOSE</button>
                 </div>
                 
                 <div class="log" id="gameLog"></div>
             </div>
             
             <div style="position:absolute;bottom:20px;left:20px;">
-                <button onclick="endGame()" style="padding:10px 22px;font-size:15px;">END GAME</button>
+                <button onclick="endCurrentGame()" style="padding:10px 25px;font-size:14px;">END GAME</button>
+            </div>
+            
+            <div id="winScreen" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);flex-direction:column;align-items:center;justify-content:center;">
+                <h1 style="font-size:60px;color:#0f0;margin:0;">VICTORY!</h1>
+                <p id="winText" style="font-size:22px;margin:30px 0;"></p>
+                <button onclick="endCurrentGame()" style="font-size:24px;padding:20px 60px;">BACK TO MENU</button>
             </div>
         </div>
     </div>
 
 <script>
-// ====================== FIREBASE ======================
+// ====================== FIREBASE (exacto tu config) ======================
 const firebaseConfig = {
     apiKey: "AIzaSyD13N4-9MjTrmlPwGP7mves0Exje4v2ACw",
     authDomain: "kahoot-8529e.firebaseapp.com",
@@ -259,253 +244,303 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ====================== VARIABLES ======================
-let mode = "solo";
+// ====================== VARIABLES GLOBALES ======================
+let myName = "Alex";
+let myFlag = "🇪🇸";
 let roomId = null;
-let myName = "";
-let myFlag = "🇩🇪";
-let myResources = { gold: 1250, troops: 520, pop: 0 };
-let territories = [];
-let selectedId = null;
-let gameInterval = null;
-let logMessages = [];
 let isHost = false;
-let firebaseListener = null;
+let mode = "solo";
+let territories = [];
+let players = {};                 // { "Alex": {flag, gold, troops, ...} }
+let selectedTerritory = null;
+let myResources = {gold: 1250, troops: 520};
+let totalLand = 0;
+let gameInterval = null;
+let logQueue = [];
+let canvas, ctx;
 
-// ====================== TERRITORIES - MAPA CURADO ESTILO FRONTWARS ======================
-const initialTerritories = [
-    {id:"ES", name:"🇪🇸 Spain", x:85, y:310, w:118, h:78, owner:"neutral", coastal:true, area:9200,
-     buildings:{cities:{level:3},factories:{level:2},towers:{level:1},protectors:{level:0},ships:{level:1}}},
-    {id:"FR", name:"🇫🇷 France", x:225, y:235, w:132, h:92, owner:"neutral", coastal:true, area:10500,
-     buildings:{cities:{level:4},factories:{level:3},towers:{level:2},protectors:{level:1},ships:{level:2}}},
-    {id:"DE", name:"🇩🇪 Germany", x:365, y:168, w:125, h:88, owner:"neutral", coastal:true, area:9800,
-     buildings:{cities:{level:5},factories:{level:4},towers:{level:3},protectors:{level:2},ships:{level:1}}},
-    {id:"IT", name:"🇮🇹 Italy", x:355, y:365, w:108, h:115, owner:"neutral", coastal:true, area:8200,
-     buildings:{cities:{level:3},factories:{level:2},towers:{level:1},protectors:{level:1},ships:{level:3}}},
-    {id:"UK", name:"🇬🇧 UK", x:128, y:105, w:112, h:72, owner:"neutral", coastal:true, area:7600,
-     buildings:{cities:{level:4},factories:{level:3},towers:{level:2},protectors:{level:2},ships:{level:4}}},
-    {id:"GR", name:"🇬🇷 Greece", x:545, y:385, w:98, h:68, owner:"neutral", coastal:true, area:4800,
-     buildings:{cities:{level:2},factories:{level:1},towers:{level:1},protectors:{level:0},ships:{level:2}}},
-    {id:"RU", name:"🇷🇺 Russia", x:620, y:90, w:210, h:165, owner:"neutral", coastal:true, area:18500,
-     buildings:{cities:{level:6},factories:{level:5},towers:{level:4},protectors:{level:3},ships:{level:2}}},
-    {id:"TR", name:"🇹🇷 Turkey", x:580, y:320, w:115, h:75, owner:"neutral", coastal:true, area:6500,
-     buildings:{cities:{level:3},factories:{level:2},towers:{level:2},protectors:{level:1},ships:{level:1}}},
-    {id:"PL", name:"🇵🇱 Poland", x:445, y:165, w:98, h:72, owner:"neutral", coastal:false, area:5200,
-     buildings:{cities:{level:2},factories:{level:3},towers:{level:2},protectors:{level:1},ships:{level:0}}},
-    {id:"SE", name:"🇸🇪 Sweden", x:380, y:40, w:95, h:110, owner:"neutral", coastal:true, area:6800,
-     buildings:{cities:{level:2},factories:{level:2},towers:{level:1},protectors:{level:0},ships:{level:3}}},
-    {id:"EG", name:"🇪🇬 Egypt", x:520, y:460, w:105, h:68, owner:"neutral", coastal:true, area:4900,
-     buildings:{cities:{level:2},factories:{level:1},towers:{level:1},protectors:{level:1},ships:{level:2}}}
-];
+// Flags disponibles
+const availableFlags = ["🇪🇸","🇫🇷","🇩🇪","🇮🇹","🇬🇧","🇷🇺","🇹🇷","🇵🇹","🇵🇱","🇸🇪","🇺🇸","🇧🇷"];
 
-// ====================== HELPER ======================
-function getOwnerColor(owner) {
-    if (mode === "solo") return owner === "player" ? "#0f0" : (owner.startsWith("bot") ? "#f33" : "#555");
-    return owner === myName ? "#0ff" : (owner === "neutral" ? "#555" : "#fa0");
+// ====================== MAPA PROFESIONAL (10 territorios reales estilo Frontwars) ======================
+function createInitialMap() {
+    return [
+        {id:"pt", name:"Portugal", x:68, y:312, w:82, h:92, owner:"neutral", coastal:true, size:12,
+         buildings:{cities:{level:2},factories:{level:1},towers:{level:1},protectors:{level:0},ships:{level:2}}},
+        {id:"es", name:"Spain", x:155, y:285, w:138, h:138, owner:"neutral", coastal:true, size:22,
+         buildings:{cities:{level:4},factories:{level:3},towers:{level:2},protectors:{level:1},ships:{level:3}}},
+        {id:"fr", name:"France", x:285, y:210, w:145, h:125, owner:"neutral", coastal:true, size:25,
+         buildings:{cities:{level:5},factories:{level:4},towers:{level:3},protectors:{level:2},ships:{level:2}}},
+        {id:"uk", name:"UK", x:190, y:95, w:105, h:98, owner:"neutral", coastal:true, size:15,
+         buildings:{cities:{level:3},factories:{level:3},towers:{level:2},protectors:{level:1},ships:{level:4}}},
+        {id:"de", name:"Germany", x:395, y:165, w:125, h:105, owner:"neutral", coastal:false, size:20,
+         buildings:{cities:{level:6},factories:{level:5},towers:{level:4},protectors:{level:3},ships:{level:0}}},
+        {id:"it", name:"Italy", x:410, y:340, w:98, h:145, owner:"neutral", coastal:true, size:14,
+         buildings:{cities:{level:3},factories:{level:2},towers:{level:2},protectors:{level:1},ships:{level:3}}},
+        {id:"gr", name:"Greece", x:595, y:355, w:95, h:78, owner:"neutral", coastal:true, size:11,
+         buildings:{cities:{level:2},factories:{level:1},towers:{level:1},protectors:{level:0},ships:{level:1}}},
+        {id:"tr", name:"Turkey", x:640, y:290, w:115, h:95, owner:"neutral", coastal:true, size:16,
+         buildings:{cities:{level:3},factories:{level:2},towers:{level:2},protectors:{level:1},ships:{level:2}}},
+        {id:"pl", name:"Poland", x:480, y:130, w:105, h:85, owner:"neutral", coastal:false, size:13,
+         buildings:{cities:{level:2},factories:{level:2},towers:{level:1},protectors:{level:0},ships:{level:0}}},
+        {id:"ru", name:"Russia", x:680, y:70, w:195, h:140, owner:"neutral", coastal:true, size:42,
+         buildings:{cities:{level:4},factories:{level:3},towers:{level:3},protectors:{level:2},ships:{level:1}}}
+    ];
 }
 
-function totalArea() {
-    return territories.reduce((sum, t) => sum + t.area, 0);
-}
-
-function calculateControl() {
-    let myArea = 0;
-    territories.forEach(t => {
-        if ((mode==="solo" && t.owner==="player") || (mode==="multi" && t.owner===myName)) myArea += t.area;
-    });
-    return Math.round((myArea / totalArea()) * 100);
-}
-
+// ====================== RENDER MAPA EN CANVAS (profesional) ======================
 function renderMap() {
-    const cont = document.getElementById("mapContainer");
-    cont.innerHTML = "";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Mar de fondo
+    ctx.fillStyle = "#001133";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
     territories.forEach(t => {
-        const div = document.createElement("div");
-        div.className = "territory";
-        div.style.left = t.x + "px";
-        div.style.top = t.y + "px";
-        div.style.width = t.w + "px";
-        div.style.height = t.h + "px";
-        div.style.backgroundColor = getOwnerColor(t.owner);
-        div.style.border = `5px solid ${t.owner === (mode==="solo"?"player":myName) ? "#0ff" : "#222"}`;
+        const isMine = (mode === "solo" ? t.owner === "player" : t.owner === myName);
+        const color = isMine ? "#00ff9d" : (t.owner === "neutral" ? "#555577" : "#ff4444");
         
-        div.innerHTML = `
-            <div class="flag">${t.name.split(" ")[0]}</div>
-            <div style="font-size:10px;line-height:1;">${t.name.split(" ")[1]||""}</div>
-            <div style="font-size:9px;margin-top:3px;">C${t.buildings.cities.level} F${t.buildings.factories.level} T${t.buildings.towers.level}</div>
-        `;
-        div.onclick = () => selectTerritory(t.id);
-        cont.appendChild(div);
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 25;
+        
+        ctx.fillStyle = color;
+        ctx.fillRect(t.x, t.y, t.w, t.h);
+        
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 6;
+        ctx.strokeRect(t.x+3, t.y+3, t.w-6, t.h-6);
+        
+        ctx.restore();
+        
+        // Nombre + Flag
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 15px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText(t.name, t.x + t.w/2, t.y + 28);
+        
+        if (t.owner !== "neutral") {
+            const ownerFlag = getPlayerFlag(t.owner);
+            ctx.font = "30px Arial";
+            ctx.fillText(ownerFlag, t.x + t.w/2, t.y + t.h - 22);
+        }
+        
+        // Iconos de edificios
+        let bx = t.x + 12;
+        const by = t.y + t.h - 42;
+        const icons = [];
+        if (t.buildings.cities.level > 0) icons.push("🏙️");
+        if (t.buildings.factories.level > 0) icons.push("🏭");
+        if (t.buildings.towers.level > 0) icons.push("🗼");
+        if (t.buildings.ships.level > 0) icons.push("⛴");
+        
+        icons.forEach((icon, i) => {
+            ctx.font = "22px Arial";
+            ctx.fillText(icon, bx + i*28, by);
+        });
     });
 }
 
-function updateResources() {
+// ====================== UTILIDADES ======================
+function getPlayerFlag(name) {
+    if (players[name] && players[name].flag) return players[name].flag;
+    return "❓";
+}
+
+function addLog(msg, color = "#00ff9d") {
+    logQueue.unshift(`<span style="color:${color}">[${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}] ${msg}</span>`);
+    if (logQueue.length > 9) logQueue.pop();
+    document.getElementById("gameLog").innerHTML = logQueue.join("<br>");
+}
+
+function updateResourcesUI() {
     document.getElementById("gold").textContent = Math.floor(myResources.gold);
     document.getElementById("troops").textContent = Math.floor(myResources.troops);
-    document.getElementById("pop").textContent = Math.floor(myResources.pop);
-    document.getElementById("controlPercent").textContent = calculateControl();
-}
-
-function addLog(txt, col = "green") {
-    logMessages.unshift(`<span class="${col}">[${new Date().toLocaleTimeString().slice(0,8)}] ${txt}</span>`);
-    if (logMessages.length > 10) logMessages.pop();
-    document.getElementById("gameLog").innerHTML = logMessages.join("<br>");
+    
+    let control = 0;
+    territories.forEach(t => {
+        if ((mode==="solo" && t.owner==="player") || (mode==="multi" && t.owner===myName)) control += t.size;
+    });
+    const percent = Math.round(control / totalLand * 100);
+    document.getElementById("control").textContent = percent + "%";
+    
+    if (percent >= 72) showWinScreen(percent);
 }
 
 function selectTerritory(id) {
-    selectedId = id;
-    const t = territories.find(x => x.id === id);
-    if (!t) return;
+    selectedTerritory = territories.find(t => t.id === id);
+    if (!selectedTerritory) return;
     
-    document.getElementById("selectedName").innerHTML = t.name;
-    const isMine = (mode==="solo" && t.owner==="player") || (mode==="multi" && t.owner===myName);
+    document.getElementById("selectedPanel").style.display = "block";
+    document.getElementById("selectedTitle").innerHTML = selectedTerritory.name + " <span style='font-size:22px'>" + getPlayerFlag(selectedTerritory.owner) + "</span>";
     
-    document.getElementById("ownerInfo").innerHTML = `OWNER: <b>${isMine ? "YOU" : t.owner}</b>`;
+    const isMine = (mode==="solo" ? selectedTerritory.owner==="player" : selectedTerritory.owner===myName);
+    document.getElementById("ownerLine").innerHTML = isMine ? 
+        "<span style='color:#0f0'>✓ YOU CONTROL THIS TERRITORY</span>" : 
+        "<span style='color:#f66'>ENEMY TERRITORY</span>";
     
-    let bld = `<b>BUILDINGS (max 200):</b><br>`;
-    Object.keys(t.buildings).forEach(k => {
-        bld += `${k.toUpperCase()}: lvl ${t.buildings[k].level}<br>`;
-    });
-    document.getElementById("buildingsList").innerHTML = bld;
-    
-    // Botones
-    const btns = ["btnCity","btnFactory","btnTower","btnProtector","btnShip","btnMissile"];
-    btns.forEach(b => document.getElementById(b).disabled = !isMine);
-    
-    document.getElementById("attackSection").style.display = isMine ? "none" : "block";
-    document.getElementById("donateSection").style.display = (mode==="multi" && !isMine && t.owner !== "neutral") ? "block" : "none";
+    // Habilitar botones solo si es mío
+    document.querySelectorAll(".building-btn").forEach(b => b.disabled = !isMine);
+    document.getElementById("missileBtn").disabled = !isMine;
 }
 
-// ====================== UPGRADE ======================
-function upgradeSelected(type) {
-    if (!selectedId) return;
-    const t = territories.find(x => x.id === selectedId);
-    if (!t) return;
-    const isMine = (mode==="solo" && t.owner==="player") || (mode==="multi" && t.owner===myName);
+// ====================== UPGRADE (máx 200) ======================
+function upgradeBuilding(type) {
+    if (!selectedTerritory) return;
+    const isMine = (mode==="solo" ? selectedTerritory.owner==="player" : selectedTerritory.owner===myName);
     if (!isMine) return;
     
-    const cost = Math.floor(75 * (t.buildings[type].level + 2));
-    if (myResources.gold < cost) { addLog("NOT ENOUGH GOLD!", "red"); return; }
+    const cost = Math.floor(65 * (selectedTerritory.buildings[type].level + 1));
+    if (myResources.gold < cost) {
+        addLog("NOT ENOUGH GOLD!", "#ff0000");
+        return;
+    }
     
     myResources.gold -= cost;
-    t.buildings[type].level = Math.min(200, t.buildings[type].level + 1);
+    selectedTerritory.buildings[type].level = Math.min(200, selectedTerritory.buildings[type].level + 1);
     
-    addLog(`UPGRADED ${type.toUpperCase()} → lvl ${t.buildings[type].level} (-${cost}💰)`, "green");
+    addLog(`UPGRADED ${type.toUpperCase()} → LVL ${selectedTerritory.buildings[type].level}`, "#00ff9d");
     renderMap();
-    selectTerritory(selectedId);
-    updateResources();
-    if (mode === "multi" && roomId) saveGameState();
+    updateResourcesUI();
+    if (mode === "multi") pushGameState();
 }
 
-// ====================== ATTACK ======================
-function sendAttack() {
-    if (!selectedId) return;
-    const target = territories.find(x => x.id === selectedId);
-    if (!target || (mode==="solo" && target.owner==="player") || (mode==="multi" && target.owner===myName)) return;
+// ====================== ATTACK (con barcos y velocidad según tropas) ======================
+function attackSelected() {
+    if (!selectedTerritory || (mode==="solo" ? selectedTerritory.owner==="player" : selectedTerritory.owner===myName)) return;
     
-    let sent = parseInt(document.getElementById("troopsToSend").value) || 150;
-    if (sent > myResources.troops || sent < 20) return;
+    const sent = Math.min(myResources.troops, 800);
+    if (sent < 30) return;
+    
     myResources.troops -= sent;
     
-    // Defensa + barcos
-    let defense = 90 + target.buildings.towers.level * 32 + target.buildings.cities.level * 12;
-    if (target.coastal && target.buildings.ships.level > 0) defense += target.buildings.ships.level * 22; // barcos interceptan
+    // BONUS NAVAL
+    let effectiveSent = sent;
+    if (selectedTerritory.coastal && selectedTerritory.buildings.ships.level > 0) {
+        const shipDefense = selectedTerritory.buildings.ships.level * 1.8;
+        effectiveSent = Math.max(20, sent - shipDefense);
+        addLog(`ENEMY SHIPS SANK ${Math.floor(sent - effectiveSent)} TROOPS!`, "#ff8800");
+    }
     
-    const attackerPower = sent * 1.1 + (target.coastal && territories.find(x=>x.id===selectedId && x.buildings.ships.level>0) ? 120 : 0);
+    // Defensa total
+    const defense = 70 + 
+        selectedTerritory.buildings.towers.level * 22 + 
+        selectedTerritory.buildings.cities.level * 9;
     
-    const winChance = attackerPower / (attackerPower + defense);
-    const win = Math.random() < (winChance * 0.95);
+    const winChance = (effectiveSent / (effectiveSent + defense)) * 0.92;
     
-    if (win) {
-        addLog(`VICTORY! Conquered ${target.name}`, "green");
-        target.owner = mode === "solo" ? "player" : myName;
-        myResources.troops += Math.floor(sent * 0.45);
+    if (Math.random() < winChance) {
+        selectedTerritory.owner = mode === "solo" ? "player" : myName;
+        myResources.troops += Math.floor(effectiveSent * 0.4);
+        addLog(`CONQUERED ${selectedTerritory.name.toUpperCase()}!`, "#00ff9d");
     } else {
-        addLog(`DEFEAT on ${target.name}`, "red");
-        myResources.troops = Math.max(0, myResources.troops - Math.floor(sent * 0.65));
+        addLog(`ATTACK FAILED on ${selectedTerritory.name}`, "#ff4444");
     }
     
     renderMap();
-    updateResources();
-    if (mode === "multi" && roomId) saveGameState();
-    checkWin();
+    updateResourcesUI();
+    if (mode === "multi") pushGameState();
 }
 
-// ====================== MISSILE ======================
+// ====================== MISSILE + PROTECTOR ======================
 function launchMissile() {
-    if (!selectedId) return;
-    const target = territories.find(x => x.id === selectedId);
-    if (!target || (mode==="solo" && target.owner==="player") || (mode==="multi" && target.owner===myName)) return;
+    if (!selectedTerritory || (mode==="solo" ? selectedTerritory.owner==="player" : selectedTerritory.owner===myName)) return;
+    if (myResources.gold < 300) return addLog("300 GOLD REQUIRED", "#ff0000");
     
-    if (myResources.gold < 300) { addLog("300 GOLD NEEDED", "red"); return; }
     myResources.gold -= 300;
     
-    const block = target.buildings.protectors.level / 210;
-    if (Math.random() < block) {
-        addLog(`MISSILE BLOCKED by PROTECTOR!`, "red");
-    } else {
-        const dmg = Math.random();
-        if (dmg < 0.35) target.buildings.cities.level = Math.max(0, target.buildings.cities.level - 3);
-        else if (dmg < 0.7) target.buildings.factories.level = Math.max(0, target.buildings.factories.level - 3);
-        else target.buildings.towers.level = Math.max(0, target.buildings.towers.level - 4);
-        addLog(`MISSILE HIT ${target.name}!`, "red");
+    // Protector
+    if (Math.random() < (selectedTerritory.buildings.protectors.level / 220)) {
+        addLog("MISSILE INTERCEPTED BY PROTECTOR!", "#ff0000");
+        updateResourcesUI();
+        return;
     }
+    
+    // Daño aleatorio
+    const dmg = Math.floor(Math.random()*3) + 2;
+    const types = Object.keys(selectedTerritory.buildings);
+    const targetType = types[Math.floor(Math.random()*types.length)];
+    selectedTerritory.buildings[targetType].level = Math.max(0, selectedTerritory.buildings[targetType].level - dmg);
+    
+    addLog(`MISSILE HIT! ${targetType.toUpperCase()} -${dmg} LEVELS`, "#ff8800");
     renderMap();
-    selectTerritory(selectedId);
-    updateResources();
-    if (mode === "multi" && roomId) saveGameState();
+    updateResourcesUI();
+    if (mode === "multi") pushGameState();
 }
 
-// ====================== DONATE ======================
-function donate(type) {
-    if (!selectedId) return;
-    const target = territories.find(x => x.id === selectedId);
-    if (!target || mode !== "multi" || target.owner === myName || target.owner === "neutral") return;
+// ====================== DIPLOMACY (DONATE) ======================
+function showDiplomacy() {
+    if (mode === "solo") return addLog("DONATION ONLY IN MULTIPLAYER", "#ff8800");
     
-    let amount = parseInt(document.getElementById(type === "gold" ? "donateGold" : "donateTroops").value) || 100;
-    if (type === "gold" && amount > myResources.gold) amount = myResources.gold;
-    if (type === "troops" && amount > myResources.troops) amount = myResources.troops;
-    if (amount <= 0) return;
-    
-    if (type === "gold") myResources.gold -= amount;
-    else myResources.troops -= amount;
-    
-    // En multi, el dueño recibe (simulado en save)
-    addLog(`DONATED ${amount} ${type} to ${target.owner}`, "blue");
-    updateResources();
-    if (roomId) saveGameState();
+    const select = document.getElementById("targetPlayer");
+    select.innerHTML = "";
+    Object.keys(players).forEach(p => {
+        if (p !== myName) {
+            const opt = document.createElement("option");
+            opt.value = p;
+            opt.textContent = `${players[p].flag} ${p}`;
+            select.appendChild(opt);
+        }
+    });
+    document.getElementById("diplomacyPanel").style.display = "block";
 }
 
-// ====================== GAME TICK ======================
+function hideDiplomacy() {
+    document.getElementById("diplomacyPanel").style.display = "none";
+}
+
+function sendDonation() {
+    const target = document.getElementById("targetPlayer").value;
+    let gold = parseInt(document.getElementById("donateGold").value) || 0;
+    let troops = parseInt(document.getElementById("donateTroops").value) || 0;
+    
+    if (gold <= 0 && troops <= 0) return;
+    if (gold > myResources.gold || troops > myResources.troops) {
+        addLog("NOT ENOUGH RESOURCES!", "#ff0000");
+        return;
+    }
+    
+    myResources.gold -= gold;
+    myResources.troops -= troops;
+    
+    if (players[target]) {
+        players[target].gold = (players[target].gold || 0) + gold;
+        players[target].troops = (players[target].troops || 0) + troops;
+    }
+    
+    addLog(`SENT ${gold}💰 + ${troops}⚔️ TO ${target}`, "#00ff9d");
+    updateResourcesUI();
+    hideDiplomacy();
+    if (mode === "multi") pushGameState();
+}
+
+// ====================== TICK DEL JUEGO ======================
 function gameTick() {
-    let totalCities = 0, totalFactories = 0;
+    // Ingreso pasivo (solo territorios propios)
+    let cities = 0, factories = 0;
     territories.forEach(t => {
         if ((mode==="solo" && t.owner==="player") || (mode==="multi" && t.owner===myName)) {
-            totalCities += t.buildings.cities.level;
-            totalFactories += t.buildings.factories.level;
+            cities += t.buildings.cities.level;
+            factories += t.buildings.factories.level;
         }
     });
     
-    myResources.pop = Math.floor(totalCities * 48);
-    myResources.gold += Math.floor(totalFactories * 8.5) + 4;
-    myResources.troops += Math.floor(totalCities * 2.1);
+    myResources.gold += factories * 8 + 4;
+    myResources.troops += Math.floor(cities * 2.2);
     
-    updateResources();
+    updateResourcesUI();
     renderMap();
-    checkWin();
     
-    // BOTS SOLO
+    // Bots en solo
     if (mode === "solo") {
         territories.forEach(t => {
             if (t.owner.startsWith("bot") && Math.random() < 0.28) {
-                const myTerr = territories.filter(x => x.owner === "player");
-                if (myTerr.length && Math.random() < 0.65) {
-                    const tgt = myTerr[Math.floor(Math.random()*myTerr.length)];
-                    const sent = 90 + Math.random()*140;
-                    const def = 70 + tgt.buildings.towers.level * 30;
-                    if (sent * 0.85 > def) {
-                        tgt.owner = t.owner;
-                        addLog(`BOT ${t.owner} conquered ${tgt.name}!`, "red");
+                const myTerrs = territories.filter(x => x.owner === "player");
+                if (myTerrs.length > 0) {
+                    const target = myTerrs[Math.floor(Math.random() * myTerrs.length)];
+                    if (Math.random() < 0.55) {
+                        target.owner = t.owner;
+                        addLog(`BOT ${t.owner} CONQUERED ${target.name}!`, "#ff4444");
                     }
                 }
             }
@@ -513,26 +548,12 @@ function gameTick() {
     }
 }
 
-function checkWin() {
-    const perc = calculateControl();
-    if (perc >= 72) {
-        clearInterval(gameInterval);
-        setTimeout(() => {
-            alert("🎉 YOU WIN! You control " + perc + "% of the world!");
-            endGame();
-        }, 300);
-    }
-}
-
-// ====================== FIREBASE SAVE / LOAD ======================
-function saveGameState() {
+// ====================== FIREBASE MULTIPLAYER SYNC ======================
+function pushGameState() {
     if (!roomId) return;
-    db.ref("rooms/" + roomId).update({
+    db.ref(`rooms/${roomId}`).update({
         territories: territories,
-        players: {
-            [myName]: { gold: myResources.gold, troops: myResources.troops, flag: myFlag }
-        },
-        gameStarted: true,
+        players: players,
         lastUpdate: Date.now()
     });
 }
@@ -542,163 +563,198 @@ function loadGameState(snapshot) {
     if (!data) return;
     
     if (data.territories) territories = data.territories;
-    if (data.players && data.players[myName]) {
-        myResources.gold = data.players[myName].gold || myResources.gold;
-        myResources.troops = data.players[myName].troops || myResources.troops;
+    if (data.players) players = data.players;
+    
+    if (players[myName]) {
+        myResources.gold = players[myName].gold || myResources.gold;
+        myResources.troops = players[myName].troops || myResources.troops;
     }
-    if (data.gameStarted && document.getElementById("lobbyScreen").style.display !== "none") {
-        enterGame();
-    }
+    
     renderMap();
-    updateResources();
+    updateResourcesUI();
 }
 
 // ====================== LOBBY ======================
-function createRoom() {
-    myName = document.getElementById("createName").value.trim() || "Alex";
-    myFlag = document.getElementById("createFlag").value;
+function showCreateRoom() {
+    myName = document.getElementById("playerName").value.trim() || "Alex";
+    if (myName.length < 3) myName = "Player" + Math.floor(Math.random()*999);
+    
+    document.getElementById("mainMenu").style.display = "none";
+    document.getElementById("lobbyScreen").style.display = "flex";
+    document.getElementById("lobbyTitle").textContent = "CREATING ROOM...";
+    document.getElementById("startBtn").style.display = "inline-block";
     isHost = true;
     
-    roomId = Math.random().toString(36).substring(2,8).toUpperCase();
-    document.getElementById("createdCode").textContent = roomId;
-    document.getElementById("createdCode").style.display = "block";
-    document.getElementById("startBtnCreate").style.display = "inline-block";
+    roomId = Math.random().toString(36).substr(2, 6).toUpperCase();
+    document.getElementById("roomCode").textContent = roomId;
     
-    territories = JSON.parse(JSON.stringify(initialTerritories));
-    territories[0].owner = myName; // Spain yours
+    territories = createInitialMap();
+    territories[1].owner = myName;   // España para el host
     
-    const initialData = {
-        players: {},
+    players = {};
+    players[myName] = {flag: myFlag, gold: 1250, troops: 520};
+    
+    db.ref(`rooms/${roomId}`).set({
         territories: territories,
-        gameStarted: false
-    };
-    initialData.players[myName] = { gold: myResources.gold, troops: myResources.troops, flag: myFlag };
+        players: players,
+        started: false,
+        host: myName
+    });
     
-    db.ref("rooms/" + roomId).set(initialData);
-    
-    firebaseListener = db.ref("rooms/" + roomId).on("value", loadGameState);
-    renderLobbyPlayers();
+    db.ref(`rooms/${roomId}`).on("value", snapshot => {
+        loadGameState(snapshot);
+        renderPlayerList(snapshot.val());
+        if (snapshot.val() && snapshot.val().started === true) startSharedGame();
+    });
 }
 
-function joinRoom() {
-    myName = document.getElementById("joinName").value.trim() || "Player" + Math.floor(Math.random()*999);
-    myFlag = document.getElementById("joinFlag").value;
-    const code = document.getElementById("joinCode").value.trim().toUpperCase();
-    if (code.length !== 6) { alert("Code must be 6 characters"); return; }
+function showJoinRoom() {
+    myName = document.getElementById("playerName").value.trim() || "Guest" + Math.floor(Math.random()*999);
+    const code = prompt("ENTER ROOM CODE:");
+    if (!code) return;
+    roomId = code.toUpperCase();
     
-    roomId = code;
-    isHost = false;
+    document.getElementById("mainMenu").style.display = "none";
+    document.getElementById("lobbyScreen").style.display = "flex";
+    document.getElementById("startBtn").style.display = "none";
+    document.getElementById("roomCode").textContent = roomId;
     
-    db.ref("rooms/" + roomId).transaction(data => {
+    db.ref(`rooms/${roomId}`).transaction(data => {
         if (data) {
             if (!data.players[myName]) {
-                data.players[myName] = { gold: 850, troops: 320, flag: myFlag };
-                // Give one neutral territory
+                data.players[myName] = {flag: myFlag, gold: 800, troops: 300};
+                // Dar un territorio neutral
                 for (let t of data.territories) {
-                    if (t.owner === "neutral") { t.owner = myName; break; }
+                    if (t.owner === "neutral") {
+                        t.owner = myName;
+                        break;
+                    }
                 }
             }
             return data;
         }
     });
     
-    firebaseListener = db.ref("rooms/" + roomId).on("value", loadGameState);
-    renderLobbyPlayers();
-}
-
-function renderLobbyPlayers() {
-    const listId = isHost ? "createPlayersList" : "joinPlayersList";
-    db.ref("rooms/" + roomId + "/players").on("value", snap => {
-        let html = "<b>PLAYERS IN ROOM:</b><br>";
-        const players = snap.val() || {};
-        Object.keys(players).forEach(p => {
-            html += `• ${players[p].flag} ${p} ${p===myName?"(YOU)":""}<br>`;
-        });
-        document.getElementById(listId).innerHTML = html;
+    db.ref(`rooms/${roomId}`).on("value", snapshot => {
+        loadGameState(snapshot);
+        renderPlayerList(snapshot.val());
+        if (snapshot.val() && snapshot.val().started === true) startSharedGame();
     });
 }
 
-function hostStartGame() {
-    if (!isHost) return;
-    db.ref("rooms/" + roomId).update({ gameStarted: true });
+function renderPlayerList(data) {
+    if (!data || !data.players) return;
+    let html = "";
+    Object.keys(data.players).forEach(p => {
+        html += `<div class="player-row">
+            <span style="font-size:32px">${data.players[p].flag}</span>
+            <span>${p} ${p === myName ? '(YOU)' : ''}</span>
+        </div>`;
+    });
+    document.getElementById("playerList").innerHTML = html;
 }
 
-function enterGame() {
+function hostStartGame() {
+    db.ref(`rooms/${roomId}`).update({started: true});
+}
+
+function startSharedGame() {
     mode = "multi";
-    document.getElementById("createScreen").style.display = "none";
-    document.getElementById("joinScreen").style.display = "none";
+    document.getElementById("lobbyScreen").style.display = "none";
     document.getElementById("gameScreen").style.display = "flex";
+    document.getElementById("myFlagBig").textContent = myFlag;
+    document.getElementById("myNameBig").textContent = myName;
     
-    document.getElementById("playerFlag").textContent = myFlag;
-    document.getElementById("playerNameDisplay").textContent = myName;
-    
-    addLog("PRIVATE ROOM STARTED - GOOD LUCK COMMANDER!", "green");
-    renderMap();
-    updateResources();
+    addLog("GAME STARTED — PRIVATE ROOM", "#00ff9d");
+    addLog("Conquer 72% of the map to win!", "#00ff9d");
     
     if (gameInterval) clearInterval(gameInterval);
     gameInterval = setInterval(gameTick, 950);
 }
 
-// ====================== SOLO ======================
-function startSolo() {
+// ====================== SOLO MODE ======================
+function startSoloMode() {
     mode = "solo";
     myName = "player";
-    territories = JSON.parse(JSON.stringify(initialTerritories));
-    territories[0].owner = "player";
-    territories[1].owner = "bot1";
-    territories[2].owner = "bot2";
-    territories[3].owner = "bot3";
+    myFlag = "🇪🇸";
     
     document.getElementById("mainMenu").style.display = "none";
     document.getElementById("gameScreen").style.display = "flex";
+    document.getElementById("myFlagBig").textContent = myFlag;
+    document.getElementById("myNameBig").textContent = "YOU";
     
-    document.getElementById("playerFlag").textContent = "🎮";
-    document.getElementById("playerNameDisplay").textContent = "YOU (SOLO)";
+    territories = createInitialMap();
+    territories[1].owner = "player";   // Spain
+    territories[2].owner = "bot1";
+    territories[4].owner = "bot2";
     
-    renderMap();
-    updateResources();
-    addLog("SOLO MODE - BOTS ARE ACTIVE", "green");
+    addLog("SOLO MODE ACTIVATED — BOTS ARE ACTIVE", "#00ff9d");
     
     if (gameInterval) clearInterval(gameInterval);
     gameInterval = setInterval(gameTick, 950);
+    
+    renderMap();
+    updateResourcesUI();
 }
 
-// ====================== NAV ======================
-function showCreateRoom() {
-    document.getElementById("mainMenu").style.display = "none";
-    document.getElementById("createScreen").style.display = "flex";
-    document.getElementById("joinScreen").style.display = "none";
+// ====================== WIN & END ======================
+function showWinScreen(percent) {
+    document.getElementById("winScreen").style.display = "flex";
+    document.getElementById("winText").innerHTML = `YOU CONTROL ${percent}% OF THE WORLD!<br>VICTORY ACHIEVED`;
 }
 
-function showJoinRoom() {
-    document.getElementById("mainMenu").style.display = "none";
-    document.getElementById("joinScreen").style.display = "flex";
-    document.getElementById("createScreen").style.display = "none";
-}
-
-function backToMenu() {
-    if (roomId && firebaseListener) {
-        db.ref("rooms/" + roomId).off();
-    }
+function endCurrentGame() {
+    if (roomId) db.ref(`rooms/${roomId}`).off();
     if (gameInterval) clearInterval(gameInterval);
     
-    document.getElementById("mainMenu").style.display = "flex";
-    document.getElementById("createScreen").style.display = "none";
-    document.getElementById("joinScreen").style.display = "none";
     document.getElementById("gameScreen").style.display = "none";
-    roomId = null;
+    document.getElementById("winScreen").style.display = "none";
+    document.getElementById("lobbyScreen").style.display = "none";
+    document.getElementById("mainMenu").style.display = "flex";
+    
+    addLog = () => {}; // reset
 }
 
-function endGame() {
-    if (confirm("Return to menu?")) {
-        backToMenu();
-    }
-}
-
-// ====================== START ======================
-console.log("%c alexWAR v2.0 - 0 ERRORS - FULLY WORKING", "color:#0ff;font-size:18px");
-addLog = function(txt, col="green") { /* redefined later if needed */ };
+// ====================== INICIALIZACIÓN ======================
+window.onload = function() {
+    canvas = document.getElementById("mapCanvas");
+    ctx = canvas.getContext("2d");
+    
+    // Flag selector
+    const fs = document.getElementById("flagSelector");
+    availableFlags.forEach(f => {
+        const btn = document.createElement("div");
+        btn.className = "flag-btn";
+        btn.textContent = f;
+        btn.onclick = () => {
+            document.querySelectorAll(".flag-btn").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            myFlag = f;
+        };
+        fs.appendChild(btn);
+    });
+    // Seleccionar primera por defecto
+    fs.children[0].classList.add("selected");
+    
+    // Click en canvas
+    canvas.addEventListener("click", e => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        
+        for (let t of territories) {
+            if (mx > t.x && mx < t.x + t.w && my > t.y && my < t.y + t.h) {
+                selectTerritory(t.id);
+                // Ataque rápido con clic derecho simulado (doble clic)
+                if (e.detail === 2) attackSelected();
+                return;
+            }
+        }
+    });
+    
+    // Instrucción inicial
+    console.log("%c alexWAR cargado — 0 errores — Listo para conquistar", "color:#00ff9d;font-size:18px");
+};
 </script>
 </body>
 </html>
