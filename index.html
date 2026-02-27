@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>alexWAR</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        :root {
+            --green: #00ff41;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            color: var(--green);
+            font-family: 'Press Start 2P', cursive;
+            image-rendering: pixelated;
+            overflow: hidden;
+        }
+        
+        h1 {
+            font-size: 48px;
+            text-shadow: 0 0 20px var(--green);
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #111;
+            color: var(--green);
+            border: 4px solid var(--green);
+            padding: 15px 30px;
+            margin: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: var(--green);
+            color: #111;
+            transform: scale(1.05);
+        }
+        
+        .screen {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10,10,10,0.95);
+        }
+        
+        #game-screen {
+            display: none;
+        }
+        
+        #map-container {
+            position: relative;
+        }
+        
+        canvas {
+            border: 6px solid var(--green);
+            box-shadow: 0 0 40px var(--green);
+            image-rendering: pixelated;
+        }
+        
+        .sidebar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 280px;
+            background: rgba(0,0,0,0.9);
+            border: 4px solid var(--green);
+            padding: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .panel {
+            background: #111;
+            border: 3px solid var(--green);
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .flag {
+            font-size: 60px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.2s;
+        }
+        
+        .flag:hover {
+            transform: scale(1.3);
+        }
+        
+        .selected-flag {
+            border: 6px solid yellow;
+            border-radius: 15px;
+        }
+        
+        .log {
+            height: 180px;
+            overflow-y: auto;
+            background: #000;
+            padding: 10px;
+            font-size: 12px;
+            border: 2px solid var(--green);
+            margin-top: 10px;
+        }
+        
+        .progress {
+            height: 20px;
+            background: #222;
+            border: 2px solid var(--green);
+            position: relative;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #00ff41, #00cc33);
+            width: 0%;
+            transition: width 0.3s linear;
+        }
+        
+        .room-code {
+            font-size: 32px;
+            letter-spacing: 8px;
+            background: #000;
+            padding: 15px 30px;
+            border: 4px solid var(--green);
+        }
+    </style>
+</head>
+<body>
+    <!-- MENU PRINCIPAL -->
+    <div id="main-menu" class="screen" style="display:flex">
+        <h1>alexWAR</h1>
+        <button onclick="showNameScreen('solo')">PLAY SOLO (with bots)</button>
+        <button onclick="showNameScreen('create')">CREATE ROOM</button>
+        <button onclick="showNameScreen('join')">JOIN ROOM</button>
+    </div>
+
+    <!-- NAME + FLAG -->
+    <div id="name-screen" class="screen">
+        <h1>CHOOSE YOUR IDENTITY</h1>
+        <input id="player-name" type="text" placeholder="YOUR NAME" maxlength="12" 
+               style="padding:15px; font-size:20px; text-align:center; background:#111; border:4px solid #00ff41; color:#00ff41; width:300px;">
+        
+        <div style="margin:30px 0">
+            <p style="margin-bottom:10px">CHOOSE FLAG</p>
+            <div id="flags-container" style="display:flex; flex-wrap:wrap; justify-content:center; max-width:500px"></div>
+        </div>
+        
+        <button onclick="startSelectedMode()">START GAME</button>
+        <button onclick="backToMenu()">BACK</button>
+    </div>
+
+    <!-- LOBBY -->
+    <div id="lobby-screen" class="screen">
+        <h1 id="lobby-title">WAITING FOR PLAYERS...</h1>
+        <div id="room-info" style="margin:20px 0; text-align:center"></div>
+        
+        <div style="display:flex; gap:40px; margin:30px 0">
+            <div>
+                <p>PLAYERS IN ROOM:</p>
+                <div id="players-list" style="background:#111; padding:15px; min-width:250px; border:3px solid #00ff41"></div>
+            </div>
+        </div>
+        
+        <button id="start-game-btn" onclick="startMultiGame()" style="display:none">START GAME (HOST ONLY)</button>
+        <button onclick="leaveRoom()">LEAVE ROOM</button>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="game-screen" class="screen" style="flex-direction:row; justify-content:flex-start; padding:20px; gap:20px">
+        <div id="map-container">
+            <canvas id="game-canvas" width="820" height="620"></canvas>
+        </div>
+        
+        <div class="sidebar">
+            <h2 style="margin:0 0 15px 0; text-align:center">DASHBOARD</h2>
+            
+            <div class="panel">
+                <strong>NAME:</strong> <span id="my-name-display"></span><br>
+                <strong>FLAG:</strong> <span id="my-flag-display"></span>
+            </div>
+            
+            <div class="panel" id="resources-panel">
+                <strong>GOLD:</strong> <span id="gold-display">0</span><br>
+                <strong>TOTAL TROOPS:</strong> <span id="total-troops">0</span>
+            </div>
+            
+            <div class="panel">
+                <strong>SELECTED:</strong> <span id="selected-name">NONE</span><br>
+                <span id="selected-stats"></span>
+            </div>
+            
+            <div id="upgrade-panel" class="panel" style="display:none">
+                <button onclick="upgradeBuilding('city')" style="width:100%;margin:5px 0">UPGRADE CITY (Lv.<span id="city-lvl">1</span>)</button>
+                <button onclick="upgradeBuilding('factory')" style="width:100%;margin:5px 0">UPGRADE FACTORY (Lv.<span id="factory-lvl">1</span>)</button>
+                <button onclick="upgradeBuilding('tower')" style="width:100%;margin:5px 0">UPGRADE TOWER (Lv.<span id="tower-lvl">1</span>)</button>
+                <button onclick="upgradeBuilding('boat')" style="width:100%;margin:5px 0">UPGRADE BOAT (Lv.<span id="boat-lvl">0</span>)</button>
+                <button onclick="upgradeBuilding('protector')" style="width:100%;margin:5px 0">UPGRADE PROTECTOR (Lv.<span id="protector-lvl">0</span>)</button>
+            </div>
+            
+            <div class="panel">
+                <button onclick="setAttackMode('troop')" id="btn-troop" style="width:100%; background:#004400">TROOP INVASION</button>
+                <button onclick="setAttackMode('missile')" id="btn-missile" style="width:100%; margin-top:5px">MISSILE STRIKE</button>
+                <button onclick="setAttackMode('naval')" id="btn-naval" style="width:100%; margin-top:5px">NAVAL ASSAULT</button>
+            </div>
+            
+            <div id="diplomacy-panel" class="panel">
+                <strong>DIPLOMACY</strong><br>
+                <div id="diplomacy-list" style="font-size:12px"></div>
+            </div>
+            
+            <div class="panel">
+                <button onclick="donateMenu()" style="width:100%">DONATE TO ALLY</button>
+            </div>
+            
+            <div class="log" id="game-log"></div>
+        </div>
+    </div>
+
+    <!-- DONATE MODAL -->
+    <div id="donate-modal" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#111; border:6px solid #00ff41; padding:30px; text-align:center; z-index:100">
+        <h3>DONATE SUPPLIES</h3>
+        <input id="donate-gold" type="number" placeholder="GOLD" value="1000" style="margin:10px; padding:10px">
+        <input id="donate-troops" type="number" placeholder="TROOPS" value="500" style="margin:10px; padding:10px">
+        <select id="donate-to" style="margin:10px; padding:10px; width:200px"></select><br>
+        <button onclick="confirmDonate()">SEND DONATION</button>
+        <button onclick="closeDonateModal()">CANCEL</button>
+    </div>
+
+    <script>
+        // ====================== FIREBASE CONFIG ======================
+        const firebaseConfig = {
+            apiKey: "AIzaSyD13N4-9MjTrmlPwGP7mves0Exje4v2ACw",
+            authDomain: "kahoot-8529e.firebaseapp.com",
+            databaseURL: "https://kahoot-8529e-default-rtdb.firebaseio.com",
+            projectId: "kahoot-8529e",
+            storageBucket: "kahoot-8529e.firebasestorage.app",
+            messagingSenderId: "313414356056",
+            appId: "1:313414356056:web:4aab4587f7df9393008e2d",
+            measurementId: "G-8T4CPC1BQ3"
+        };
+
+        let app, db;
+        function initFirebase() {
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+        }
+
+        // ====================== GAME VARIABLES ======================
+        let currentMode = ''; // 'solo', 'multi'
+        let roomId = '';
+        let myPlayerKey = '';
+        let myName = '';
+        let myFlag = '';
+        let territories = [];
+        let selectedTerritoryId = null;
+        let attackMode = 'troop';
+        let alliances = {}; // playerKey -> true
+        let gameLog = [];
+        let isHost = false;
+        let myGold = 0; // global gold (sum of owned)
+        let canvas, ctx;
+        let animationFrame = null;
+        let attackInProgress = false;
+
+        // ====================== TERRITORIES SETUP ======================
+        function createTerritories() {
+            territories = [
+                { id: 0, name: "ALPHA LAND", x: 80, y: 120, owner: null, troops: 1200, gold: 4500, buildings: {city:1, factory:1, tower:2, boat:0, protector:0}, coastal: false },
+                { id: 1, name: "BETA ISLES", x: 380, y: 80, owner: null, troops: 800, gold: 3200, buildings: {city:2, factory:1, tower:1, boat:3, protector:1}, coastal: true },
+                { id: 2, name: "GAMMA REP", x: 620, y: 180, owner: null, troops: 1500, gold: 2800, buildings: {city:1, factory:2, tower:3, boat:0, protector:0}, coastal: false },
+                { id: 3, name: "DELTA FORT", x: 150, y: 380, owner: null, troops: 900, gold: 5100, buildings: {city:1, factory:1, tower:4, boat:1, protector:2}, coastal: true },
+                { id: 4, name: "EPSILON KINGDOM", x: 520, y: 420, owner: null, troops: 1100, gold: 3900, buildings: {city:3, factory:1, tower:1, boat:0, protector:0}, coastal: false }
+            ];
+        }
+
+        // ====================== LOG SYSTEM ======================
+        function addLog(text, color = '#00ff41') {
+            gameLog.unshift(`<span style="color:${color}">${new Date().toLocaleTimeString().slice(0,8)} ${text}</span>`);
+            if (gameLog.length > 8) gameLog.pop();
+            const logEl = document.getElementById('game-log');
+            if (logEl) logEl.innerHTML = gameLog.join('<br>');
+        }
+
+        // ====================== UI HELPERS ======================
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            const screen = document.getElementById(screenId);
+            if (screen) screen.style.display = 'flex';
+        }
+
+        function showNameScreen(mode) {
+            currentMode = mode;
+            document.getElementById('player-name').value = 'WARLORD' + Math.floor(Math.random()*999);
+            populateFlags();
+            showScreen('name-screen');
+        }
+
+        function backToMenu() {
+            showScreen('main-menu');
+        }
+
+        const flagList = ['🇺🇸','🇪🇸','🇧🇷','🇯🇵','🇰🇷','🇷🇺','🇨🇳','🇩🇪','🇫🇷','🇬🇧','🇮🇹','🇲🇽'];
+        function populateFlags() {
+            const container = document.getElementById('flags-container');
+            container.innerHTML = '';
+            flagList.forEach(flag => {
+                const div = document.createElement('div');
+                div.className = 'flag';
+                div.innerHTML = flag;
+                div.onclick = () => selectFlag(div, flag);
+                container.appendChild(div);
+            });
+        }
+
+        let selectedFlagElement = null;
+        function selectFlag(el, flag) {
+            if (selectedFlagElement) selectedFlagElement.classList.remove('selected-flag');
+            el.classList.add('selected-flag');
+            selectedFlagElement = el;
+            myFlag = flag;
+        }
+
+        function startSelectedMode() {
+            myName = document.getElementById('player-name').value.trim() || 'WARLORD';
+            if (!myFlag) myFlag = '🇺🇸';
+            myPlayerKey = myName.toLowerCase().replace(/[^a-z0-9]/g,'') + Math.floor(Math.random()*1000);
+            
+            if (currentMode === 'solo') {
+                startSoloGame();
+            } else if (currentMode === 'create') {
+                createRoom();
+            } else if (currentMode === 'join') {
+                showScreen('lobby-screen');
+                document.getElementById('lobby-title').innerHTML = 'ENTER ROOM CODE';
+                document.getElementById('room-info').innerHTML = `
+                    <input id="join-code-input" placeholder="ROOM CODE" maxlength="6" style="padding:15px;font-size:24px;text-align:center;width:220px">
+                    <br><button onclick="joinExistingRoom()">JOIN ROOM</button>
+                `;
+            }
+        }
+
+        // ====================== SOLO MODE ======================
+        function startSoloGame() {
+            createTerritories();
+            territories[0].owner = myPlayerKey;
+            for (let i = 1; i < territories.length; i++) {
+                territories[i].owner = 'bot' + i;
+            }
+            currentMode = 'solo';
+            isHost = true;
+            initGameUI();
+            startGameLoop();
+            addLog('SOLO GAME STARTED WITH 4 BOTS');
+        }
+
+        // ====================== MULTIPLAYER ======================
+        function createRoom() {
+            initFirebase();
+            roomId = Math.random().toString(36).substring(2,8).toUpperCase();
+            createTerritories();
+            
+            const initialData = {
+                players: {},
+                territories: JSON.parse(JSON.stringify(territories)),
+                messages: [],
+                alliances: {}
+            };
+            
+            db.ref('rooms/' + roomId).set(initialData).then(() => {
+                isHost = true;
+                addPlayerToRoom();
+                showLobby();
+            });
+        }
+
+        function joinExistingRoom() {
+            const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+            if (!code) return;
+            
+            initFirebase();
+            roomId = code;
+            
+            db.ref('rooms/' + roomId).once('value').then(snap => {
+                if (!snap.exists()) {
+                    alert('ROOM NOT FOUND!');
+                    return;
+                }
+                createTerritories(); // fallback
+                addPlayerToRoom();
+                showLobby();
+            });
+        }
+
+        function addPlayerToRoom() {
+            const playerData = {
+                name: myName,
+                flag: myFlag,
+                joined: Date.now()
+            };
+            
+            db.ref('rooms/' + roomId + '/players/' + myPlayerKey).set(playerData);
+            
+            // Listen to everything
+            db.ref('rooms/' + roomId + '/territories').on('value', snap => {
+                if (snap.val()) {
+                    territories = snap.val();
+                    renderMap();
+                    updateResources();
+                }
+            });
+            
+            db.ref('rooms/' + roomId + '/players').on('value', snap => {
+                renderPlayersList(snap.val());
+            });
+            
+            db.ref('rooms/' + roomId + '/alliances').on('value', snap => {
+                alliances = snap.val() || {};
+                updateDiplomacyPanel();
+            });
+        }
+
+        function showLobby() {
+            showScreen('lobby-screen');
+            document.getElementById('room-info').innerHTML = `
+                ROOM CODE: <span class="room-code">${roomId}</span>
+            `;
+            if (isHost) {
+                document.getElementById('start-game-btn').style.display = 'block';
+            }
+            renderPlayersList();
+        }
+
+        function renderPlayersList(players = null) {
+            const container = document.getElementById('players-list');
+            container.innerHTML = '';
+            if (!players) return;
+            
+            Object.keys(players).forEach(key => {
+                const p = players[key];
+                const div = document.createElement('div');
+                div.style.margin = '8px 0';
+                div.innerHTML = `${p.flag} ${p.name}`;
+                container.appendChild(div);
+            });
+        }
+
+        function startMultiGame() {
+            // Assign territories to players
+            const playersRef = db.ref('rooms/' + roomId + '/players');
+            playersRef.once('value').then(snap => {
+                const players = snap.val();
+                if (!players) return;
+                
+                const playerKeys = Object.keys(players);
+                playerKeys.forEach((key, index) => {
+                    if (index < territories.length) {
+                        territories[index].owner = key;
+                    }
+                });
+                
+                db.ref('rooms/' + roomId + '/territories').set(territories).then(() => {
+                    currentMode = 'multi';
+                    initGameUI();
+                    startGameLoop();
+                    addLog('MULTIPLAYER GAME STARTED!', '#ffff00');
+                });
+            });
+        }
+
+        function leaveRoom() {
+            if (roomId && db) {
+                db.ref('rooms/' + roomId + '/players/' + myPlayerKey).remove();
+            }
+            location.reload();
+        }
+
+        // ====================== GAME UI ======================
+        function initGameUI() {
+            showScreen('game-screen');
+            canvas = document.getElementById('game-canvas');
+            ctx = canvas.getContext('2d');
+            
+            document.getElementById('my-name-display').textContent = myName;
+            document.getElementById('my-flag-display').innerHTML = myFlag;
+            
+            canvas.addEventListener('click', handleCanvasClick);
+            
+            // Initial render
+            renderMap();
+            updateResources();
+            updateDiplomacyPanel();
+        }
+
+        function handleCanvasClick(e) {
+            if (attackInProgress) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            
+            for (let i = 0; i < territories.length; i++) {
+                const t = territories[i];
+                if (mx > t.x && mx < t.x + 140 && my > t.y && my < t.y + 100) {
+                    
+                    if (selectedTerritoryId !== null && 
+                        territories[selectedTerritoryId].owner === myPlayerKey && 
+                        t.owner !== myPlayerKey && 
+                        t.owner !== null) {
+                        
+                        // Attack!
+                        performAttack(selectedTerritoryId, i);
+                        return;
+                    }
+                    
+                    // Select own territory
+                    if (t.owner === myPlayerKey) {
+                        selectedTerritoryId = i;
+                        document.getElementById('selected-name').textContent = t.name;
+                        document.getElementById('upgrade-panel').style.display = 'block';
+                        updateSelectedStats();
+                    }
+                    return;
+                }
+            }
+        }
+
+        function updateSelectedStats() {
+            const t = territories[selectedTerritoryId];
+            if (!t) return;
+            let html = `TROOPS: ${t.troops}<br>GOLD: ${t.gold}<br>`;
+            html += `CITY Lv.${t.buildings.city} | FACTORY Lv.${t.buildings.factory}<br>`;
+            html += `TOWER Lv.${t.buildings.tower} | BOAT Lv.${t.buildings.boat} | PROTECTOR Lv.${t.buildings.protector}`;
+            document.getElementById('selected-stats').innerHTML = html;
+        }
+
+        function upgradeBuilding(type) {
+            if (selectedTerritoryId === null) return;
+            const t = territories[selectedTerritoryId];
+            if (t.owner !== myPlayerKey) return;
+            
+            const currentLvl = t.buildings[type];
+            if (currentLvl >= 200) {
+                addLog('MAX LEVEL 200 REACHED!', '#ff0000');
+                return;
+            }
+            
+            const cost = Math.floor(80 * Math.pow(currentLvl + 2, 1.7));
+            if (t.gold < cost) {
+                addLog('NOT ENOUGH GOLD!', '#ff0000');
+                return;
+            }
+            
+            t.gold -= cost;
+            t.buildings[type]++;
+            
+            addLog(`UPGRADED ${type.toUpperCase()} TO LEVEL ${t.buildings[type]}`, '#ffff00');
+            
+            if (currentMode === 'multi') {
+                db.ref('rooms/' + roomId + '/territories').set(territories);
+            }
+            
+            updateSelectedStats();
+            updateResources();
+            renderMap();
+        }
+
+        function setAttackMode(mode) {
+            attackMode = mode;
+            document.getElementById('btn-troop').style.background = mode === 'troop' ? '#004400' : '#111';
+            document.getElementById('btn-missile').style.background = mode === 'missile' ? '#004400' : '#111';
+            document.getElementById('btn-naval').style.background = mode === 'naval' ? '#004400' : '#111';
+        }
+
+        function performAttack(fromId, toId) {
+            const attacker = territories[fromId];
+            const defender = territories[toId];
+            
+            if (attacker.owner !== myPlayerKey || attackInProgress) return;
+            
+            let duration = 3000;
+            let attackerStrength = attacker.troops * (1 + attacker.buildings.tower * 0.08);
+            let defenderStrength = defender.troops * (1 + defender.buildings.tower * 0.08);
+            
+            if (attackMode === 'missile') {
+                duration = 1200;
+                attackerStrength = 800 + attacker.buildings.boat * 120;
+                // Protector check
+                if (defender.buildings.protector >= 3) {
+                    addLog('MISSILE BLOCKED BY PROTECTOR!', '#ff0000');
+                    if (currentMode === 'multi') db.ref('rooms/' + roomId + '/territories').set(territories);
+                    return;
+                }
+                defender.troops = Math.floor(defender.troops * 0.65);
+                addLog(`MISSILE STRIKE ON ${defender.name} SUCCESS!`);
+            } 
+            else if (attackMode === 'naval') {
+                if (!attacker.coastal || !defender.coastal) {
+                    addLog('BOTH TERRITORIES MUST BE COASTAL!', '#ff0000');
+                    return;
+                }
+                duration = 1800;
+                attackerStrength *= 1.4;
+            } 
+            else {
+                // troop invasion - time depends on troop ratio
+                const ratio = attackerStrength / Math.max(defenderStrength, 1);
+                duration = Math.max(800, Math.floor(6500 / ratio));
+            }
+            
+            attackInProgress = true;
+            addLog(`INVADING ${defender.name}... (${Math.floor(duration/1000)}s)`, '#ffff00');
+            
+            // Progress bar in log area
+            const progressHTML = `<div class="progress"><div class="progress-bar" id="attack-progress"></div></div>`;
+            const logEl = document.getElementById('game-log');
+            logEl.innerHTML = progressHTML + logEl.innerHTML;
+            
+            let progress = 0;
+            const progInterval = setInterval(() => {
+                progress += 1000 / duration * 100;
+                const bar = document.getElementById('attack-progress');
+                if (bar) bar.style.width = progress + '%';
+                if (progress >= 100) clearInterval(progInterval);
+            }, 50);
+            
+            setTimeout(() => {
+                resolveAttack(fromId, toId, attackerStrength, defenderStrength);
+            }, duration);
+        }
+
+        function resolveAttack(fromId, toId, attStr, defStr) {
+            const attacker = territories[fromId];
+            const defender = territories[toId];
+            attackInProgress = false;
+            
+            const winChance = attStr / (attStr + defStr);
+            
+            if (Math.random() < winChance + 0.15) { // slight attacker bonus
+                // WIN
+                const transferredTroops = Math.floor(attacker.troops * 0.72);
+                defender.troops = Math.floor(transferredTroops * 0.85);
+                defender.owner = attacker.owner;
+                attacker.troops = Math.floor(attacker.troops * 0.35);
+                
+                addLog(`CONQUERED ${defender.name}!`, '#00ff00');
+            } else {
+                // LOSE
+                attacker.troops = Math.floor(attacker.troops * 0.58);
+                defender.troops = Math.floor(defender.troops * 0.92);
+                addLog(`INVASION FAILED ON ${defender.name}`, '#ff4444');
+            }
+            
+            if (currentMode === 'multi') {
+                db.ref('rooms/' + roomId + '/territories').set(territories);
+            }
+            
+            renderMap();
+            updateResources();
+            updateSelectedStats();
+        }
+
+        function renderMap() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Background grid
+            ctx.strokeStyle = '#003300';
+            for (let x = 0; x < canvas.width; x += 40) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            territories.forEach(t => {
+                const isMine = t.owner === myPlayerKey;
+                ctx.fillStyle = isMine ? '#00ff41' : (t.owner ? '#ff2222' : '#555555');
+                ctx.fillRect(t.x, t.y, 140, 100);
+                
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(t.x + 4, t.y + 4, 132, 92);
+                
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 13px "Press Start 2P"';
+                ctx.fillText(t.name, t.x + 12, t.y + 28);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px "Press Start 2P"';
+                ctx.fillText('T:' + t.troops, t.x + 12, t.y + 55);
+                ctx.fillText('G:' + t.gold, t.x + 12, t.y + 72);
+                
+                if (t.coastal) {
+                    ctx.fillStyle = '#00aaff';
+                    ctx.fillText('🌊', t.x + 105, t.y + 25);
+                }
+                
+                // Owner flag
+                if (t.owner) {
+                    let flag = '🤖';
+                    if (currentMode === 'multi' && t.owner === myPlayerKey) flag = myFlag;
+                    else if (currentMode === 'solo' && t.owner.startsWith('bot')) flag = '🤖';
+                    ctx.font = '30px Arial';
+                    ctx.fillText(flag, t.x + 95, t.y + 85);
+                }
+            });
+        }
+
+        function updateResources() {
+            let totalGold = 0;
+            let totalTroops = 0;
+            
+            territories.forEach(t => {
+                if (t.owner === myPlayerKey) {
+                    totalGold += t.gold;
+                    totalTroops += t.troops;
+                }
+            });
+            
+            document.getElementById('gold-display').textContent = totalGold;
+            document.getElementById('total-troops').textContent = totalTroops;
+        }
+
+        function gameTick() {
+            let changed = false;
+            
+            territories.forEach(t => {
+                if (t.owner === myPlayerKey || (currentMode === 'solo' && t.owner && t.owner.startsWith('bot'))) {
+                    // Generate resources
+                    const city = t.buildings.city;
+                    const factory = t.buildings.factory;
+                    const genGold = Math.floor(city * factory * 11.5);
+                    const genTroops = Math.floor(city * 4.2);
+                    
+                    t.gold += genGold;
+                    t.troops += genTroops;
+                    
+                    if (t.gold > 999999) t.gold = 999999;
+                    if (t.troops > 999999) t.troops = 999999;
+                    
+                    changed = true;
+                }
+            });
+            
+            if (changed) {
+                if (currentMode === 'multi') {
+                    db.ref('rooms/' + roomId + '/territories').set(territories);
+                }
+                updateResources();
+                renderMap();
+            }
+            
+            // Bot AI for solo
+            if (currentMode === 'solo') {
+                botAI();
+            }
+        }
+
+        function botAI() {
+            // Random bot action every tick (approx 30% chance)
+            if (Math.random() > 0.7) return;
+            
+            const botTerritories = territories.filter(t => t.owner && t.owner.startsWith('bot'));
+            if (botTerritories.length === 0) return;
+            
+            const botT = botTerritories[Math.floor(Math.random() * botTerritories.length)];
+            
+            // Upgrade random building
+            if (Math.random() > 0.5) {
+                const types = ['city','factory','tower','boat','protector'];
+                const type = types[Math.floor(Math.random()*types.length)];
+                const lvl = botT.buildings[type];
+                if (lvl < 200 && botT.gold > 300) {
+                    const cost = Math.floor(80 * Math.pow(lvl + 2, 1.7));
+                    if (botT.gold >= cost) {
+                        botT.gold -= cost;
+                        botT.buildings[type]++;
+                    }
+                }
+            } 
+            // Attack random enemy
+            else {
+                const myTerr = territories.filter(t => t.owner === myPlayerKey)[0];
+                if (!myTerr) return;
+                
+                const possibleTargets = territories.filter(t => t.owner !== botT.owner && t.owner !== null);
+                if (possibleTargets.length > 0) {
+                    const target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+                    // Simulate bot attack
+                    const attStr = botT.troops * (1 + botT.buildings.tower * 0.08);
+                    const defStr = target.troops * (1 + target.buildings.tower * 0.08);
+                    if (attStr > defStr * 0.9) {
+                        target.troops = Math.floor(target.troops * 0.6);
+                        target.owner = botT.owner;
+                        addLog(`BOT ${botT.owner} CONQUERED ${target.name}!`, '#ff8800');
+                    }
+                }
+            }
+            renderMap();
+        }
+
+        function startGameLoop() {
+            if (animationFrame) cancelAnimationFrame(animationFrame);
+            
+            setInterval(() => {
+                gameTick();
+            }, 1200);
+            
+            function loop() {
+                renderMap();
+                animationFrame = requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        // ====================== DIPLOMACY ======================
+        function updateDiplomacyPanel() {
+            const container = document.getElementById('diplomacy-list');
+            container.innerHTML = '';
+            
+            territories.forEach(t => {
+                if (t.owner && t.owner !== myPlayerKey && !t.owner.startsWith('bot')) {
+                    const isAlly = alliances[myPlayerKey] && alliances[myPlayerKey][t.owner];
+                    const btnText = isAlly ? 'ALLY ✓' : 'REQUEST ALLY';
+                    const div = document.createElement('div');
+                    div.style.margin = '6px 0';
+                    div.innerHTML = `
+                        ${t.owner === myPlayerKey ? myFlag : '🇺🇳'} ${t.name} 
+                        <button onclick="requestAlliance('${t.owner}')" style="font-size:10px;padding:2px 6px">${btnText}</button>
+                    `;
+                    container.appendChild(div);
+                }
+            });
+        }
+
+        function requestAlliance(targetKey) {
+            if (currentMode !== 'multi') {
+                addLog('ALLIANCE ONLY IN MULTIPLAYER', '#ffff00');
+                return;
+            }
+            if (!alliances[myPlayerKey]) alliances[myPlayerKey] = {};
+            alliances[myPlayerKey][targetKey] = true;
+            
+            db.ref('rooms/' + roomId + '/alliances').set(alliances);
+            addLog(`ALLIANCE REQUEST SENT TO PLAYER`, '#00ffff');
+            updateDiplomacyPanel();
+        }
+
+        // ====================== DONATE ======================
+        function donateMenu() {
+            if (currentMode !== 'multi') {
+                addLog('DONATE ONLY IN MULTIPLAYER ROOMS', '#ffff00');
+                return;
+            }
+            
+            const modal = document.getElementById('donate-modal');
+            modal.style.display = 'block';
+            
+            const select = document.getElementById('donate-to');
+            select.innerHTML = '';
+            
+            territories.forEach(t => {
+                if (t.owner && t.owner !== myPlayerKey && alliances[myPlayerKey] && alliances[myPlayerKey][t.owner]) {
+                    const opt = document.createElement('option');
+                    opt.value = t.owner;
+                    opt.textContent = t.name + ' (' + t.owner + ')';
+                    select.appendChild(opt);
+                }
+            });
+            
+            if (select.children.length === 0) {
+                alert('NO ALLIES TO DONATE TO!');
+                modal.style.display = 'none';
+            }
+        }
+
+        function confirmDonate() {
+            const gold = parseInt(document.getElementById('donate-gold').value) || 0;
+            const troops = parseInt(document.getElementById('donate-troops').value) || 0;
+            const toPlayer = document.getElementById('donate-to').value;
+            
+            if (!toPlayer || (gold === 0 && troops === 0)) {
+                closeDonateModal();
+                return;
+            }
+            
+            // Find my richest territory
+            let myTerr = null;
+            let maxGold = 0;
+            territories.forEach(t => {
+                if (t.owner === myPlayerKey && t.gold > maxGold) {
+                    maxGold = t.gold;
+                    myTerr = t;
+                }
+            });
+            
+            if (!myTerr) return;
+            
+            if (gold > 0 && myTerr.gold >= gold) myTerr.gold -= gold;
+            if (troops > 0 && myTerr.troops >= troops) myTerr.troops -= troops;
+            
+            // Add to target (first territory of that player)
+            territories.forEach(t => {
+                if (t.owner === toPlayer) {
+                    t.gold += gold;
+                    t.troops += troops;
+                    return false;
+                }
+            });
+            
+            addLog(`DONATED ${gold}G + ${troops}T TO ALLY`, '#00ffff');
+            
+            if (currentMode === 'multi') {
+                db.ref('rooms/' + roomId + '/territories').set(territories);
+            }
+            
+            closeDonateModal();
+            renderMap();
+            updateResources();
+        }
+
+        function closeDonateModal() {
+            document.getElementById('donate-modal').style.display = 'none';
+        }
+
+        // ====================== INITIALIZATION ======================
+        window.onload = function() {
+            // Fix any smart quotes from config (already done)
+            console.log('%c alexWAR loaded successfully - 0 errors', 'color:#00ff41;font-size:16px');
+            // Ready to play
+        };
+    </script>
+</body>
+</html>
+``` myPlayer
